@@ -68,5 +68,9 @@ app.put('/settings/:id', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+const port = process.env.PORT;
+if (!port) {
+  console.error('No se proporcionó el puerto a través de process.env.PORT');
+  process.exit(1);
+}
+app.listen(port, () => console.log(`Servidor corriendo en puerto ${port}`));
