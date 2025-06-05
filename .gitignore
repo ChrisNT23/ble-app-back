@@ -1,0 +1,65 @@
+# Ignorar archivos y carpetas generados por el sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos de configuración local
+.env
+.env.local
+.env.development
+.env.production
+
+# Ignorar carpetas de node_modules (para Node.js)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignorar carpetas de Python (si usas Python)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignorar archivos de compilación y artefactos
+dist/
+build/
+out/
+target/
+*.log
+*.jar
+*.class
+
+# Ignorar archivos de bases de datos locales
+*.sqlite
+*.db
+
+# Ignorar archivos de IDEs
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/
+
+# Ignorar archivos generados por herramientas de despliegue
+deploy/
+*.war
+*.ear
+
+# Ignorar certificados y claves (si los tienes)
+*.pem
+*.key
+*.crt
+
+# Ignorar archivos de configuración de despliegue específicos
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Ignorar archivos temporales
+*.tmp
+*.bak
+*.swp
+
+# Ignorar archivos de documentación generada (si aplica)
+docs/_build/
+
+# Ignorar carpetas de virtual environments (Python)
+venv/
+env/
