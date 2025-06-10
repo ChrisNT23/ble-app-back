@@ -1,4 +1,12 @@
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+
+// Función para generar token JWT
+const generateToken = (userId) => {
+    return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+        expiresIn: '30d' // El token expira en 30 días
+    });
+};
 
 // Registrar un nuevo usuario
 exports.register = async (req, res) => {
@@ -23,14 +31,17 @@ exports.register = async (req, res) => {
             password
         });
 
+        // Generar token
+        const token = generateToken(user._id);
+
         // Enviar respuesta sin incluir la contraseña
         const userResponse = {
-            _id: user._id,
+            id: user._id,
             nombre: user.nombre,
             apellido: user.apellido,
             correo: user.correo,
             pais: user.pais,
-            createdAt: user.createdAt
+            token
         };
 
         res.status(201).json({
@@ -71,13 +82,17 @@ exports.login = async (req, res) => {
             });
         }
 
+        // Generar token
+        const token = generateToken(user._id);
+
         // Enviar respuesta sin incluir la contraseña
         const userResponse = {
-            _id: user._id,
+            id: user._id,
             nombre: user.nombre,
             apellido: user.apellido,
             correo: user.correo,
-            pais: user.pais
+            pais: user.pais,
+            token
         };
 
         res.status(200).json({

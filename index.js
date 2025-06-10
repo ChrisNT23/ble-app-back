@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
 const userRoutes = require('./routes/userRoutes');
 
 dotenv.config();
@@ -36,41 +37,28 @@ const settingsSchema = new mongoose.Schema({
 
 const Settings = mongoose.model('Settings', settingsSchema);
 
-// Middleware para verificar si el usuario está autenticado
-const isAuthenticated = async (req, res, next) => {
+// Middleware para verificar el token JWT
+const authenticateToken = async (req, res, next) => {
   try {
-    const userId = req.headers['user-id'];
-    if (!userId) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'Token no proporcionado' });
     }
-    req.userId = userId;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Error de autenticación' });
+    return res.status(401).json({ error: 'Token inválido' });
   }
 };
 
-// Ruta para guardar datos
-app.post('/settings', isAuthenticated, async (req, res) => {
+// Ruta para obtener settings de un usuario específico
+app.get('/api/settings/:userId', authenticateToken, async (req, res) => {
   try {
-    const { name, emergencyContact, emergencyMessage } = req.body;
-    const newSettings = new Settings({
-      userId: req.userId,
-      name,
-      emergencyContact,
-      emergencyMessage,
-    });
-    await newSettings.save();
-    res.status(201).json({ message: 'Configuración guardada' });
-  } catch (error) {
-    res.status(500).json({ error: 'Error al guardar configuración' });
-  }
-});
-
-// Ruta para obtener los datos más recientes
-app.get('/settings', isAuthenticated, async (req, res) => {
-  try {
-    const settings = await Settings.findOne({ userId: req.userId }).sort({ timestamp: -1 });
+    const settings = await Settings.findOne({ userId: req.params.userId }).sort({ timestamp: -1 });
     if (!settings) {
       return res.status(404).json({ error: 'No se encontraron configuraciones para este usuario' });
     }
@@ -80,8 +68,25 @@ app.get('/settings', isAuthenticated, async (req, res) => {
   }
 });
 
-// Ruta para actualizar datos (editar)
-app.put('/settings/:id', isAuthenticated, async (req, res) => {
+// Ruta para guardar datos
+app.post('/api/settings', authenticateToken, async (req, res) => {
+  try {
+    const { name, emergencyContact, emergencyMessage } = req.body;
+    const newSettings = new Settings({
+      userId: req.userId,
+      name,
+      emergencyContact,
+      emergencyMessage,
+    });
+    const savedSettings = await newSettings.save();
+    res.status(201).json(savedSettings);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al guardar configuración' });
+  }
+});
+
+// Ruta para actualizar datos
+app.put('/api/settings/:id', authenticateToken, async (req, res) => {
   try {
     const { name, emergencyContact, emergencyMessage } = req.body;
     const updatedSettings = await Settings.findOneAndUpdate(
