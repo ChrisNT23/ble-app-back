@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const userRoutes = require('./routes/userRoutes');
 
 dotenv.config();
 
@@ -16,6 +17,9 @@ mongoose.connect(process.env.MONGO_URI, {
 })
   .then(() => console.log('Conectado a MongoDB Atlas'))
   .catch(err => console.error('Error al conectar a MongoDB:', err));
+
+// Rutas de usuario
+app.use('/api/users', userRoutes);
 
 // Definir el esquema y modelo para los datos de Settings
 const settingsSchema = new mongoose.Schema({
