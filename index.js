@@ -23,6 +23,11 @@ app.use('/api/users', userRoutes);
 
 // Definir el esquema y modelo para los datos de Settings
 const settingsSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   name: String,
   emergencyContact: String,
   emergencyMessage: String,
@@ -31,11 +36,26 @@ const settingsSchema = new mongoose.Schema({
 
 const Settings = mongoose.model('Settings', settingsSchema);
 
+// Middleware para verificar si el usuario está autenticado
+const isAuthenticated = async (req, res, next) => {
+  try {
+    const userId = req.headers['user-id'];
+    if (!userId) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+    req.userId = userId;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Error de autenticación' });
+  }
+};
+
 // Ruta para guardar datos
-app.post('/settings', async (req, res) => {
+app.post('/settings', isAuthenticated, async (req, res) => {
   try {
     const { name, emergencyContact, emergencyMessage } = req.body;
     const newSettings = new Settings({
+      userId: req.userId,
       name,
       emergencyContact,
       emergencyMessage,
@@ -48,9 +68,12 @@ app.post('/settings', async (req, res) => {
 });
 
 // Ruta para obtener los datos más recientes
-app.get('/settings', async (req, res) => {
+app.get('/settings', isAuthenticated, async (req, res) => {
   try {
-    const settings = await Settings.findOne().sort({ timestamp: -1 });
+    const settings = await Settings.findOne({ userId: req.userId }).sort({ timestamp: -1 });
+    if (!settings) {
+      return res.status(404).json({ error: 'No se encontraron configuraciones para este usuario' });
+    }
     res.status(200).json(settings);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener configuración' });
@@ -58,14 +81,19 @@ app.get('/settings', async (req, res) => {
 });
 
 // Ruta para actualizar datos (editar)
-app.put('/settings/:id', async (req, res) => {
+app.put('/settings/:id', isAuthenticated, async (req, res) => {
   try {
     const { name, emergencyContact, emergencyMessage } = req.body;
-    const updatedSettings = await Settings.findByIdAndUpdate(
-      req.params.id,
+    const updatedSettings = await Settings.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId },
       { name, emergencyContact, emergencyMessage, timestamp: Date.now() },
       { new: true }
     );
+    
+    if (!updatedSettings) {
+      return res.status(404).json({ error: 'Configuración no encontrada' });
+    }
+    
     res.status(200).json(updatedSettings);
   } catch (error) {
     res.status(500).json({ error: 'Error al actualizar configuración' });
