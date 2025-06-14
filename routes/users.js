@@ -7,21 +7,21 @@ const User = require('../models/User');
 // Registro de usuario
 router.post('/register', async (req, res) => {
     try {
-        console.log('Datos recibidos:', req.body);
         const { nombre, apellido, correo, password, phone } = req.body;
 
         // Validar que todos los campos requeridos estén presentes
         if (!nombre || !apellido || !correo || !password || !phone) {
             return res.status(400).json({
                 success: false,
-                message: 'Todos los campos son requeridos',
-                missing: {
-                    nombre: !nombre,
-                    apellido: !apellido,
-                    correo: !correo,
-                    password: !password,
-                    phone: !phone
-                }
+                message: 'Todos los campos son requeridos'
+            });
+        }
+
+        // Validar formato del número de teléfono
+        if (!phone.startsWith('+593') || phone.length !== 13) {
+            return res.status(400).json({
+                success: false,
+                message: 'El número de teléfono debe comenzar con +593 seguido de 9 dígitos'
             });
         }
 
@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                message: 'El usuario ya existe'
+                message: 'El correo ya está registrado'
             });
         }
 
@@ -40,45 +40,31 @@ router.post('/register', async (req, res) => {
             apellido,
             correo,
             password,
-            phone: phone.startsWith('+') ? phone : `+${phone}`
+            phone
         });
 
         // Guardar usuario
-        const savedUser = await user.save();
-        console.log('Usuario guardado:', savedUser);
+        await user.save();
 
-        // Crear y devolver el token
-        const payload = {
-            user: {
-                id: savedUser.id
-            }
-        };
-
-        jwt.sign(
-            payload,
+        // Generar token
+        const token = jwt.sign(
+            { userId: user._id },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' },
-            (err, token) => {
-                if (err) {
-                    console.error('Error al generar token:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Error al generar token'
-                    });
-                }
-                res.json({
-                    success: true,
-                    token,
-                    user: {
-                        id: savedUser.id,
-                        nombre: savedUser.nombre,
-                        apellido: savedUser.apellido,
-                        correo: savedUser.correo,
-                        phone: savedUser.phone
-                    }
-                });
-            }
+            { expiresIn: '24h' }
         );
+
+        res.status(201).json({
+            success: true,
+            message: 'Usuario registrado exitosamente',
+            token,
+            user: {
+                id: user._id,
+                nombre: user.nombre,
+                apellido: user.apellido,
+                correo: user.correo,
+                phone: user.phone
+            }
+        });
     } catch (error) {
         console.error('Error en registro:', error);
         res.status(500).json({

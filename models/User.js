@@ -28,7 +28,13 @@ const userSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: [true, 'El número de teléfono es requerido'],
-        trim: true
+        trim: true,
+        validate: {
+            validator: function(v) {
+                return /^\+593\d{9}$/.test(v);
+            },
+            message: props => `${props.value} no es un número de teléfono válido. Debe comenzar con +593 seguido de 9 dígitos.`
+        }
     },
     createdAt: {
         type: Date,
