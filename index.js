@@ -2,11 +2,44 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const jwt = require('jsonwebtoken');
 const userRoutes = require('./routes/userRoutes');
+const whatsappRoutes = require('./routes/whatsappRoutes');
 const { sendWhatsAppMessage } = require('./config/twilio');
 
-dotenv.config();
+// Cargar variables de entorno
+const result = dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+if (result.error) {
+    console.error('Error cargando .env:', result.error);
+    process.exit(1);
+}
+
+// Verificar variables de entorno críticas
+const requiredEnvVars = [
+    'PORT',
+    'MONGO_URI',
+    'JWT_SECRET',
+    'TWILIO_ACCOUNT_SID',
+    'TWILIO_AUTH_TOKEN'
+];
+
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+    console.error('Error: Faltan las siguientes variables de entorno:');
+    missingEnvVars.forEach(envVar => console.error(`- ${envVar}`));
+    process.exit(1);
+}
+
+// Mostrar información de las variables de entorno (sin mostrar valores sensibles)
+console.log('Variables de entorno cargadas:');
+console.log('PORT:', process.env.PORT);
+console.log('MONGO_URI:', process.env.MONGO_URI ? 'Configurado' : 'No configurado');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Configurado' : 'No configurado');
+console.log('TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID);
+console.log('TWILIO_AUTH_TOKEN:', process.env.TWILIO_AUTH_TOKEN ? 'Presente' : 'No presente');
 
 const app = express();
 app.use(cors());
@@ -20,8 +53,9 @@ mongoose.connect(process.env.MONGO_URI, {
   .then(() => console.log('Conectado a MongoDB Atlas'))
   .catch(err => console.error('Error al conectar a MongoDB:', err));
 
-// Rutas de usuario
+// Rutas
 app.use('/api/users', userRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Definir el esquema y modelo para los datos de Settings
 const settingsSchema = new mongoose.Schema({
