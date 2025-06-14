@@ -2,8 +2,10 @@ const twilio = require('twilio');
 const dotenv = require('dotenv');
 const path = require('path');
 
-// Cargar variables de entorno
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// Cargar variables de entorno solo en desarrollo
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+}
 
 // Verificar que las credenciales estén presentes
 if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {

@@ -8,12 +8,12 @@ const userRoutes = require('./routes/userRoutes');
 const whatsappRoutes = require('./routes/whatsappRoutes');
 const { sendWhatsAppMessage } = require('./config/twilio');
 
-// Cargar variables de entorno
-const result = dotenv.config({ path: path.resolve(process.cwd(), '.env') });
-
-if (result.error) {
-    console.error('Error cargando .env:', result.error);
-    process.exit(1);
+// Cargar variables de entorno solo en desarrollo
+if (process.env.NODE_ENV !== 'production') {
+    const result = dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+    if (result.error) {
+        console.error('Error cargando .env:', result.error);
+    }
 }
 
 // Verificar variables de entorno críticas
