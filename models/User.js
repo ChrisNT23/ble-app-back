@@ -27,14 +27,8 @@ const userSchema = new mongoose.Schema({
     },
     phone: {
         type: String,
-        required: true,
-        validate: {
-            validator: function(v) {
-                // Validar que el número de teléfono tenga el formato correcto
-                return /^\+?[1-9]\d{1,14}$/.test(v);
-            },
-            message: props => `${props.value} no es un número de teléfono válido!`
-        }
+        required: [true, 'El número de teléfono es requerido'],
+        trim: true
     },
     createdAt: {
         type: Date,
