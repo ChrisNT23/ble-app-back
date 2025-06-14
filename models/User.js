@@ -31,10 +31,7 @@ const userSchema = new mongoose.Schema({
         trim: true,
         validate: {
             validator: function(v) {
-                console.log('Validando teléfono:', v);
-                const isValid = /^\+593\d{9}$/.test(v);
-                console.log('¿Es válido?:', isValid);
-                return isValid;
+                return /^\+593\d{9}$/.test(v);
             },
             message: 'El número de teléfono debe comenzar con +593 seguido de 9 dígitos'
         }
@@ -47,7 +44,7 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Middleware para hashear la contraseña antes de guardar
+// Middleware para encriptar la contraseña antes de guardar
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
     

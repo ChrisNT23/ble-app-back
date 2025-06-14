@@ -4,8 +4,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const jwt = require('jsonwebtoken');
-const userRoutes = require('./routes/userRoutes');
-const whatsappRoutes = require('./routes/whatsappRoutes');
+const userRoutes = require('./routes/users');
+const whatsappRoutes = require('./routes/whatsapp');
 const { sendWhatsAppMessage } = require('./config/twilio');
 
 // Cargar variables de entorno solo en desarrollo

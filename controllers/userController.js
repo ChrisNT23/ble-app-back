@@ -11,7 +11,15 @@ const generateToken = (userId) => {
 // Registrar un nuevo usuario
 exports.register = async (req, res) => {
     try {
-        const { nombre, apellido, correo, pais, password } = req.body;
+        const { nombre, apellido, correo, password, phone } = req.body;
+
+        console.log('Datos recibidos en el controlador:', {
+            nombre,
+            apellido,
+            correo,
+            password: '***',
+            phone
+        });
 
         // Verificar si el usuario ya existe
         const existingUser = await User.findOne({ correo });
@@ -27,8 +35,8 @@ exports.register = async (req, res) => {
             nombre,
             apellido,
             correo,
-            pais,
-            password
+            password,
+            phone
         });
 
         // Generar token
@@ -40,7 +48,7 @@ exports.register = async (req, res) => {
             nombre: user.nombre,
             apellido: user.apellido,
             correo: user.correo,
-            pais: user.pais,
+            phone: user.phone,
             token
         };
 
@@ -51,6 +59,7 @@ exports.register = async (req, res) => {
         });
 
     } catch (error) {
+        console.error('Error en el controlador de registro:', error);
         res.status(500).json({
             success: false,
             message: 'Error al registrar usuario',
@@ -91,7 +100,7 @@ exports.login = async (req, res) => {
             nombre: user.nombre,
             apellido: user.apellido,
             correo: user.correo,
-            pais: user.pais,
+            phone: user.phone,
             token
         };
 
@@ -102,6 +111,7 @@ exports.login = async (req, res) => {
         });
 
     } catch (error) {
+        console.error('Error en el controlador de login:', error);
         res.status(500).json({
             success: false,
             message: 'Error al iniciar sesión',
