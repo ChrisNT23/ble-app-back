@@ -24,11 +24,7 @@ router.post('/register', async (req, res) => {
             phone
         });
 
-        // Encriptar contraseña
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
-
-        // Guardar usuario
+        // Guardar usuario (la contraseña se encriptará automáticamente por el middleware)
         await user.save();
 
         // Crear y devolver el token
@@ -49,7 +45,10 @@ router.post('/register', async (req, res) => {
         );
     } catch (error) {
         console.error('Error en registro:', error);
-        res.status(500).json({ message: 'Error en el servidor' });
+        res.status(500).json({ 
+            message: 'Error al registrar usuario',
+            error: error.message 
+        });
     }
 });
 
