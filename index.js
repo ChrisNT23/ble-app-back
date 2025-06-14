@@ -4,6 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const userRoutes = require('./routes/userRoutes');
+const { sendWhatsAppMessage } = require('./config/twilio');
 
 dotenv.config();
 
@@ -112,6 +113,14 @@ app.put('/api/settings/:id', authenticateToken, async (req, res) => {
     
     if (!updatedSettings) {
       return res.status(404).json({ error: 'Configuración no encontrada' });
+    }
+
+    // Enviar mensaje de WhatsApp al contacto de emergencia
+    if (emergencyContact && emergencyMessage) {
+      const messageResult = await sendWhatsAppMessage(emergencyContact, emergencyMessage);
+      if (!messageResult.success) {
+        console.error('Error al enviar mensaje de WhatsApp:', messageResult.error);
+      }
     }
     
     res.status(200).json(updatedSettings);
