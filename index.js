@@ -121,6 +121,8 @@ app.get('/api/settings/:userId', authenticateToken, async (req, res) => {
 // Ruta para guardar datos
 app.post('/api/settings', authenticateToken, async (req, res) => {
   try {
+    // IMPORTANTE: Esta ruta SOLO guarda la configuración en la base de datos
+    // NO envía mensajes de WhatsApp ni realiza ninguna otra acción
     const { name, emergencyContact, emergencyMessage } = req.body;
     const newSettings = new Settings({
       userId: req.userId,
@@ -138,6 +140,8 @@ app.post('/api/settings', authenticateToken, async (req, res) => {
 // Ruta para actualizar datos
 app.put('/api/settings/:id', authenticateToken, async (req, res) => {
   try {
+    // IMPORTANTE: Esta ruta SOLO actualiza la configuración en la base de datos
+    // NO envía mensajes de WhatsApp ni realiza ninguna otra acción
     const { name, emergencyContact, emergencyMessage } = req.body;
     const updatedSettings = await Settings.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
@@ -147,14 +151,6 @@ app.put('/api/settings/:id', authenticateToken, async (req, res) => {
     
     if (!updatedSettings) {
       return res.status(404).json({ error: 'Configuración no encontrada' });
-    }
-
-    // Enviar mensaje de WhatsApp al contacto de emergencia
-    if (emergencyContact && emergencyMessage) {
-      const messageResult = await sendWhatsAppMessage(emergencyContact, emergencyMessage);
-      if (!messageResult.success) {
-        console.error('Error al enviar mensaje de WhatsApp:', messageResult.error);
-      }
     }
     
     res.status(200).json(updatedSettings);
