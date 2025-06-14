@@ -20,20 +20,21 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 
 const client = twilio(accountSid, authToken);
 
-const sendWhatsAppMessage = async (to, message) => {
+const sendWhatsAppMessage = async (from, to, message) => {
     try {
-        // Asegurarse de que el número tenga el formato correcto
-        const formattedNumber = to.startsWith('+') ? to : `+${to}`;
+        // Asegurarse de que los números tengan el formato correcto
+        const formattedFrom = from.startsWith('+') ? from : `+${from}`;
+        const formattedTo = to.startsWith('+') ? to : `+${to}`;
         
         const messageConfig = {
-            to: `whatsapp:${formattedNumber}`,
-            from: 'whatsapp:+14155238886', // Número de WhatsApp de Twilio
+            to: `whatsapp:${formattedTo}`,
+            from: `whatsapp:${formattedFrom}`,
             body: message
         };
 
         console.log('Enviando mensaje con configuración:', {
-            to: messageConfig.to,
             from: messageConfig.from,
+            to: messageConfig.to,
             bodyLength: message.length
         });
 

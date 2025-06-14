@@ -20,15 +20,25 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Por favor ingrese un correo válido']
     },
-    pais: {
-        type: String,
-        required: [true, 'El país es requerido'],
-        trim: true
-    },
     password: {
         type: String,
         required: [true, 'La contraseña es requerida'],
         minlength: [6, 'La contraseña debe tener al menos 6 caracteres']
+    },
+    phone: {
+        type: String,
+        required: true,
+        validate: {
+            validator: function(v) {
+                // Validar que el número de teléfono tenga el formato correcto
+                return /^\+?[1-9]\d{1,14}$/.test(v);
+            },
+            message: props => `${props.value} no es un número de teléfono válido!`
+        }
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
 }, {
     timestamps: true
