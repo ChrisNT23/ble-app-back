@@ -8,9 +8,24 @@ const User = require('../models/User');
 router.post('/register', async (req, res) => {
     try {
         const { nombre, apellido, correo, password, phone } = req.body;
+        
+        console.log('Datos recibidos en el backend:', {
+            nombre,
+            apellido,
+            correo,
+            password: '***',
+            phone
+        });
 
         // Validar que todos los campos requeridos estén presentes
         if (!nombre || !apellido || !correo || !password || !phone) {
+            console.log('Campos faltantes:', {
+                nombre: !nombre,
+                apellido: !apellido,
+                correo: !correo,
+                password: !password,
+                phone: !phone
+            });
             return res.status(400).json({
                 success: false,
                 message: 'Todos los campos son requeridos'
@@ -19,6 +34,7 @@ router.post('/register', async (req, res) => {
 
         // Validar formato del número de teléfono
         if (!phone.startsWith('+593') || phone.length !== 13) {
+            console.log('Formato de teléfono inválido:', phone);
             return res.status(400).json({
                 success: false,
                 message: 'El número de teléfono debe comenzar con +593 seguido de 9 dígitos'
@@ -35,16 +51,35 @@ router.post('/register', async (req, res) => {
         }
 
         // Crear nuevo usuario
-        const user = new User({
-            nombre,
-            apellido,
-            correo,
+        const userData = {
+            nombre: nombre.trim(),
+            apellido: apellido.trim(),
+            correo: correo.trim().toLowerCase(),
             password,
-            phone
+            phone: phone.trim()
+        };
+
+        console.log('Datos del usuario a crear:', {
+            ...userData,
+            password: '***'
         });
+
+        const user = new User(userData);
+        
+        // Validar el modelo antes de guardar
+        const validationError = user.validateSync();
+        if (validationError) {
+            console.log('Error de validación:', validationError);
+            return res.status(400).json({
+                success: false,
+                message: 'Error de validación',
+                error: validationError.message
+            });
+        }
 
         // Guardar usuario
         await user.save();
+        console.log('Usuario guardado exitosamente');
 
         // Generar token
         const token = jwt.sign(
@@ -66,7 +101,7 @@ router.post('/register', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error en registro:', error);
+        console.error('Error detallado en registro:', error);
         res.status(500).json({
             success: false,
             message: 'Error al registrar usuario',

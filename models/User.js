@@ -31,9 +31,12 @@ const userSchema = new mongoose.Schema({
         trim: true,
         validate: {
             validator: function(v) {
-                return /^\+593\d{9}$/.test(v);
+                console.log('Validando teléfono:', v);
+                const isValid = /^\+593\d{9}$/.test(v);
+                console.log('¿Es válido?:', isValid);
+                return isValid;
             },
-            message: props => `${props.value} no es un número de teléfono válido. Debe comenzar con +593 seguido de 9 dígitos.`
+            message: 'El número de teléfono debe comenzar con +593 seguido de 9 dígitos'
         }
     },
     createdAt: {
@@ -59,7 +62,7 @@ userSchema.pre('save', async function(next) {
 
 // Método para comparar contraseñas
 userSchema.methods.comparePassword = async function(candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+    return bcrypt.compare(candidatePassword, this.password);
 };
 
 const User = mongoose.model('User', userSchema);
