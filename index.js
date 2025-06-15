@@ -91,31 +91,23 @@ const authenticateToken = async (req, res, next) => {
 };
 
 // Ruta para obtener settings de un usuario específico
-app.get('/api/settings/:userId', authenticateToken, async (req, res) => {
-  try {
-    const settings = await Settings.findOne({ userId: req.params.userId }).sort({ timestamp: -1 });
-    
-    if (!settings) {
-      // Devolver un objeto settings por defecto para usuarios nuevos
-      const defaultSettings = {
-        isNew: true,
-        userId: req.params.userId,
-        name: "",
-        emergencyContact: "",
-        emergencyMessage: "",
-        timestamp: new Date()
-      };
-      return res.status(200).json(defaultSettings);
-    }
+app.get('/api/settings', authenticateToken, async (req, res) => {
+    try {
+        const settings = await Settings.findOne({ userId: req.userId }).sort({ timestamp: -1 });
+        
+        if (!settings) {
+            return res.status(200).json({
+                name: "",
+                emergencyContact: "",
+                emergencyMessage: ""
+            });
+        }
 
-    // Agregar flag isNew: false para usuarios existentes
-    const responseSettings = settings.toObject();
-    responseSettings.isNew = false;
-    
-    res.status(200).json(responseSettings);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener configuración' });
-  }
+        res.status(200).json(settings);
+    } catch (error) {
+        console.error('Error al obtener configuración:', error);
+        res.status(500).json({ error: 'Error al obtener configuración' });
+    }
 });
 
 // Ruta para guardar datos
