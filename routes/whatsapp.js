@@ -2,14 +2,36 @@ const express = require('express');
 const router = express.Router();
 const { sendWhatsAppMessage } = require('../config/twilio');
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
 
-router.post('/send', async (req, res) => {
+// Middleware para verificar el token
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: 'Token no proporcionado' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: 'Token inválido' });
+    }
+};
+
+router.post('/send', authenticateToken, async (req, res) => {
     try {
         const { to, message, location } = req.body;
-        const userId = req.user.id; // Obtener el ID del usuario del token
+        console.log('Datos recibidos:', { to, message, location });
+        console.log('Usuario del token:', req.user);
 
         // Obtener el usuario para obtener su número de teléfono
-        const user = await User.findById(userId);
+        const user = await User.findById(req.user.id);
+        console.log('Usuario encontrado:', user);
+
         if (!user) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }

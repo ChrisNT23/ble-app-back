@@ -93,6 +93,7 @@ exports.login = async (req, res) => {
 
         // Generar token
         const token = generateToken(user._id);
+        console.log('Token generado para usuario:', user._id);
 
         // Enviar respuesta sin incluir la contraseña
         const userResponse = {
