@@ -1,9 +1,40 @@
 const Settings = require('../models/Settings');
 
-// Obtener configuración del usuario
+// Obtener configuración del usuario actual
 exports.getSettings = async (req, res) => {
     try {
         const settings = await Settings.findOne({ userId: req.userId }).sort({ timestamp: -1 });
+        
+        if (!settings) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    name: "",
+                    emergencyContact: "",
+                    emergencyMessage: ""
+                }
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: settings
+        });
+    } catch (error) {
+        console.error('Error al obtener configuración:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener configuración',
+            error: error.message
+        });
+    }
+};
+
+// Obtener configuración por ID de usuario
+exports.getSettingsByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const settings = await Settings.findOne({ userId }).sort({ timestamp: -1 });
         
         if (!settings) {
             return res.status(200).json({

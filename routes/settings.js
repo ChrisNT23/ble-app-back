@@ -6,8 +6,11 @@ const { authenticateToken } = require('../middleware/auth');
 // Todas las rutas requieren autenticación
 router.use(authenticateToken);
 
-// Obtener configuración del usuario
+// Obtener configuración del usuario actual
 router.get('/', settingsController.getSettings);
+
+// Obtener configuración por ID de usuario
+router.get('/:userId', settingsController.getSettingsByUserId);
 
 // Guardar nueva configuración
 router.post('/', settingsController.saveSettings);
