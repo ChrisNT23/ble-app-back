@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1];
@@ -12,21 +12,14 @@ const authenticateToken = (req, res, next) => {
             });
         }
 
-        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-            if (err) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Token inválido o expirado'
-                });
-            }
-            req.user = user;
-            next();
-        });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.userId = decoded.id;
+        next();
     } catch (error) {
-        return res.status(500).json({
+        console.error('Error en autenticación:', error);
+        return res.status(401).json({
             success: false,
-            message: 'Error en la autenticación',
-            error: error.message
+            message: 'Token inválido'
         });
     }
 };

@@ -6,6 +6,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const userRoutes = require('./routes/users');
 const whatsappRoutes = require('./routes/whatsapp');
+const settingsRoutes = require('./routes/settings');
 const { sendWhatsAppMessage } = require('./config/twilio');
 
 // Cargar variables de entorno solo en desarrollo
@@ -56,6 +57,7 @@ mongoose.connect(process.env.MONGO_URI, {
 // Rutas
 app.use('/api/users', userRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Definir el esquema y modelo para los datos de Settings
 const settingsSchema = new mongoose.Schema({

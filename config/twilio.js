@@ -1,53 +1,50 @@
-const twilio = require('twilio');
-const dotenv = require('dotenv');
-const path = require('path');
+const axios = require('axios');
+require('dotenv').config();
 
-// Cargar variables de entorno solo en desarrollo
-if (process.env.NODE_ENV !== 'production') {
-    dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
+const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
+    console.error('Error: WHATSAPP_TOKEN y WHATSAPP_PHONE_NUMBER_ID son requeridos');
+    process.exit(1);
 }
-
-// Verificar que las credenciales estén presentes
-if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
-    console.error('Error: Las credenciales de Twilio no están configuradas correctamente');
-    console.error('TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID);
-    console.error('TWILIO_AUTH_TOKEN:', process.env.TWILIO_AUTH_TOKEN ? 'Presente' : 'No presente');
-    throw new Error('Credenciales de Twilio no configuradas');
-}
-
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-
-const client = twilio(accountSid, authToken);
 
 const sendWhatsAppMessage = async (from, to, message) => {
     try {
-        // Asegurarse de que los números tengan el formato correcto
-        const formattedFrom = from.startsWith('+') ? from : `+${from}`;
-        const formattedTo = to.startsWith('+') ? to : `+${to}`;
-        
-        const messageConfig = {
-            to: `whatsapp:${formattedTo}`,
-            from: `whatsapp:${formattedFrom}`,
-            body: message
-        };
-
-        console.log('Enviando mensaje con configuración:', {
-            from: messageConfig.from,
-            to: messageConfig.to,
-            bodyLength: message.length
+        console.log('Enviando mensaje de WhatsApp:', {
+            from,
+            to,
+            message
         });
 
-        const result = await client.messages.create(messageConfig);
-        return { success: true, messageId: result.sid };
+        const response = await axios({
+            method: 'POST',
+            url: `https://graph.facebook.com/v17.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+            headers: {
+                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+                'Content-Type': 'application/json',
+            },
+            data: {
+                messaging_product: "whatsapp",
+                to: to,
+                type: "text",
+                text: {
+                    body: message
+                }
+            }
+        });
+
+        console.log('Mensaje enviado exitosamente:', response.data);
+        return {
+            success: true,
+            messageId: response.data.messages[0].id
+        };
     } catch (error) {
-        console.error('Error detallado de Twilio:', error);
-        return { 
-            success: false, 
+        console.error('Error detallado de WhatsApp:', error.response?.data || error.message);
+        return {
+            success: false,
             error: error.message,
-            details: 'Error al enviar mensaje de WhatsApp',
-            code: error.code,
-            status: error.status
+            details: error.response?.data || error
         };
     }
 };
