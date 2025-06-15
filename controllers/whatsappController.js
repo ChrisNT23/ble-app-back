@@ -60,9 +60,12 @@ exports.sendMessage = async (req, res) => {
 
         // Construir el mensaje con la ubicación
         let fullMessage = message;
-        if (location) {
+        if (location && location.latitude && location.longitude) {
             const mapsUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
-            fullMessage += `\n\nMi ubicación actual: ${mapsUrl}`;
+            // Solo agregar la ubicación si no está ya incluida en el mensaje
+            if (!message.includes(mapsUrl)) {
+                fullMessage += `\n\nMi ubicación actual: ${mapsUrl}`;
+            }
         }
 
         console.log('Enviando mensaje a:', formattedNumber);
