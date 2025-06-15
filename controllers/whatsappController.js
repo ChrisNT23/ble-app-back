@@ -1,4 +1,7 @@
 const { sendWhatsAppMessage } = require('../config/twilio');
+const twilio = require('twilio');
+const User = require('../models/User');
+const Settings = require('../models/Settings');
 
 // Función para validar el número de teléfono
 const validatePhoneNumber = (phoneNumber) => {
@@ -35,90 +38,74 @@ const validatePhoneNumber = (phoneNumber) => {
     };
 };
 
+const client = twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+);
+
 // Enviar mensaje de WhatsApp
 exports.sendMessage = async (req, res) => {
     try {
-        const { to, message } = req.body;
+        const { to, message, location } = req.body;
 
-        // Debug: Mostrar los datos recibidos
-        console.log('Datos recibidos:', { to, message });
-
-        // Validar que se proporcionen los campos necesarios
         if (!to || !message) {
             return res.status(400).json({
                 success: false,
-                message: 'Se requiere el número de teléfono y el mensaje'
+                message: 'Se requieren el número de teléfono y el mensaje'
             });
         }
 
-        // Validar el número de teléfono
-        const validation = validatePhoneNumber(to);
-        if (!validation.isValid) {
-            return res.status(400).json({
-                success: false,
-                message: validation.message
-            });
+        // Formatear el número de teléfono
+        const formattedNumber = to.startsWith('+') ? to : `+${to}`;
+
+        // Construir el mensaje con la ubicación
+        let fullMessage = message;
+        if (location) {
+            const mapsUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+            fullMessage += `\n\nMi ubicación actual: ${mapsUrl}`;
         }
 
-        // Debug: Mostrar las credenciales de Twilio
-        console.log('Credenciales Twilio:', {
-            accountSid: process.env.TWILIO_ACCOUNT_SID,
-            authToken: process.env.TWILIO_AUTH_TOKEN ? 'Presente' : 'No presente'
+        console.log('Enviando mensaje a:', formattedNumber);
+        console.log('Mensaje:', fullMessage);
+
+        const twilioMessage = await client.messages.create({
+            body: fullMessage,
+            from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+            to: `whatsapp:${formattedNumber}`
         });
 
-        // Crear el cliente de Twilio
-        const twilio = require('twilio');
-        const client = twilio(
-            process.env.TWILIO_ACCOUNT_SID,
-            process.env.TWILIO_AUTH_TOKEN
-        );
+        console.log('Mensaje enviado:', twilioMessage.sid);
 
-        // Debug: Mostrar la configuración del mensaje
-        const messageConfig = {
-            to: `whatsapp:${validation.formattedNumber}`,
-            from: 'whatsapp:+14155238886',
-            body: message
-        };
-        console.log('Configuración del mensaje:', messageConfig);
-
-        // Enviar el mensaje
-        const result = await client.messages.create(messageConfig);
-
-        console.log('Mensaje enviado exitosamente:', result.sid);
-
-        res.status(200).json({
+        return res.json({
             success: true,
             message: 'Mensaje enviado correctamente',
-            messageId: result.sid
+            data: {
+                messageId: twilioMessage.sid,
+                status: twilioMessage.status
+            }
         });
-
     } catch (error) {
-        console.error('Error detallado:', {
-            message: error.message,
-            code: error.code,
-            status: error.status,
-            moreInfo: error.moreInfo,
-            stack: error.stack
-        });
-
-        // Determinar el mensaje de error específico
-        let errorMessage = 'Error al enviar el mensaje de WhatsApp';
+        console.error('Error al enviar mensaje:', error);
+        
+        // Manejar errores específicos de Twilio
         if (error.code === 21211) {
-            errorMessage = 'El número de teléfono no es válido para WhatsApp';
-        } else if (error.code === 21214) {
-            errorMessage = 'El número de teléfono no está registrado en WhatsApp';
-        } else if (error.code === 21608) {
-            errorMessage = 'No tienes permisos para enviar mensajes de WhatsApp';
-        } else if (error.code === 21614) {
-            errorMessage = 'El número de teléfono no está verificado en WhatsApp';
+            return res.status(400).json({
+                success: false,
+                message: 'Número de teléfono inválido'
+            });
         }
 
-        res.status(500).json({
+        if (error.code === 21614) {
+            return res.status(400).json({
+                success: false,
+                message: 'El número no está registrado en WhatsApp'
+            });
+        }
+
+        return res.status(500).json({
             success: false,
-            message: errorMessage,
-            error: error.message,
-            details: error.moreInfo || 'Error al enviar mensaje de WhatsApp',
-            code: error.code
+            message: 'Error al enviar el mensaje',
+            error: error.message
         });
     }
 }; 
