@@ -23,7 +23,8 @@ const requiredEnvVars = [
     'MONGO_URI',
     'JWT_SECRET',
     'TWILIO_ACCOUNT_SID',
-    'TWILIO_AUTH_TOKEN'
+    'TWILIO_AUTH_TOKEN',
+    'TWILIO_WHATSAPP_NUMBER'
 ];
 
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
@@ -41,6 +42,7 @@ console.log('MONGO_URI:', process.env.MONGO_URI ? 'Configurado' : 'No configurad
 console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'Configurado' : 'No configurado');
 console.log('TWILIO_ACCOUNT_SID:', process.env.TWILIO_ACCOUNT_SID);
 console.log('TWILIO_AUTH_TOKEN:', process.env.TWILIO_AUTH_TOKEN ? 'Presente' : 'No presente');
+console.log('TWILIO_WHATSAPP_NUMBER:', process.env.TWILIO_WHATSAPP_NUMBER ? 'Configurado' : 'No configurado');
 
 const app = express();
 app.use(cors());
@@ -58,21 +60,6 @@ mongoose.connect(process.env.MONGO_URI, {
 app.use('/api/users', userRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/settings', settingsRoutes);
-
-// Definir el esquema y modelo para los datos de Settings
-const settingsSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  name: String,
-  emergencyContact: String,
-  emergencyMessage: String,
-  timestamp: { type: Date, default: Date.now },
-});
-
-const Settings = mongoose.model('Settings', settingsSchema);
 
 // Middleware para verificar el token JWT
 const authenticateToken = async (req, res, next) => {
